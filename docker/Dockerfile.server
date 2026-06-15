@@ -1,0 +1,28 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Thiết lập PYTHONPATH để import module src đúng cách
+ENV PYTHONPATH=/app
+# Tránh tạo các file .pyc
+ENV PYTHONDONTWRITEBYTECODE=1
+# Tránh buffer log để hiển thị log real-time
+ENV PYTHONUNBUFFERED=1
+
+# Cài đặt build-essential phòng trường hợp biên dịch thư viện C/C++
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy file requirements và cài đặt thư viện
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy mã nguồn dự án vào container
+COPY src/ ./src/
+
+# Mở cổng kết nối của Flower Server
+EXPOSE 8080
+
+# Khởi chạy server mặc định (có thể override qua CMD trong docker-compose)
+ENTRYPOINT ["python", "src/server.py"]

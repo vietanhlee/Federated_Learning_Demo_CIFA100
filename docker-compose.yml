@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mlflow:
+    image: python:3.10-slim
+    container_name: mlflow_server
+    command: >
+      sh -c "pip install mlflow && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /app/artifacts"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_data:/app
+    networks:
+      - fl_network
+
+  flower-server:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.server
+    container_name: flower_server
+    command: ["--rounds", "5", "--server-address", "0.0.0.0:8080", "--mlflow-uri", "http://mlflow:5000"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - mlflow
+    networks:
+      - fl_network
+
+  client-1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    container_name: flower_client_1
+    command: ["--client-id", "0", "--server-address", "flower-server:8080", "--epochs", "2"]
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - flower-server
+    restart: on-failure
+    networks:
+      - fl_network
+
+  client-2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.client
+    container_name: flower_client_2
+    command: ["--client-id", "1", "--server-address", "flower-server:8080", "--epochs", "2"]
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      - flower-server
+    restart: on-failure
+    networks:
+      - fl_network
+
+volumes:
+  mlflow_data:
+  # Mount ./data từ host để tránh việc download lại CIFAR-100 từ mạng nhiều lần
+
+networks:
+  fl_network:
+    driver: bridge
