@@ -54,7 +54,7 @@ Phương pháp này sẽ tự động xây dựng các containers chạy MLflow 
    ```
 
 2. **Cách thức hoạt động trong Docker Compose:**
-   - Container `mlflow` được dựng và mở cổng `5000`.
+   - Container `mlflow-server` được dựng và mở cổng `5000`.
    - Container `flower-server` khởi động, chờ kết nối trên cổng `8080` và kết nối với MLflow để ghi nhật ký.
    - Các container `client-1` và `client-2` được khởi động song song, tự động tải/truy xuất dữ liệu từ thư mục dùng chung `./data` trên máy host để tránh việc download lặp lại, sau đó kết nối tới Server để bắt đầu huấn luyện.
    - Quá trình kết nối của clients sử dụng cơ chế `restart: on-failure` để đảm bảo kết nối lại nếu Server chưa sẵn sàng.

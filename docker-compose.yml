@@ -1,15 +1,17 @@
 version: '3.8'
 
 services:
-  mlflow:
-    image: python:3.10-slim
-    container_name: mlflow_server
-    command: >
-      sh -c "pip install mlflow && mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow.db --default-artifact-root /app/artifacts"
+  mlflow-server:
+    image: ghcr.io/mlflow/mlflow:v2.12.0
+    container_name: mlflow-server
+    restart: always
     ports:
       - "5000:5000"
+    environment:
+      MLFLOW_SERVER_ALLOWED_HOSTS: "mlflow-server,mlflow-server:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000"
     volumes:
-      - mlflow_data:/app
+      - mlflow_data:/mlruns
+    command: mlflow server --backend-store-uri sqlite:////mlruns/mlflow.db --serve-artifacts --default-artifact-root mlflow-artifacts:/ --artifacts-destination /mlruns --host 0.0.0.0 --port 5000
     networks:
       - fl_network
 
@@ -18,13 +20,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.server
     container_name: flower_server
-    command: ["--rounds", "5", "--server-address", "0.0.0.0:8080", "--mlflow-uri", "http://mlflow:5000"]
+    command: ["--rounds", "5", "--server-address", "0.0.0.0:8080", "--mlflow-uri", "http://mlflow-server:5000"]
     ports:
       - "8080:8080"
     volumes:
       - ./data:/app/data
     depends_on:
-      - mlflow
+      - mlflow-server
     networks:
       - fl_network
 
