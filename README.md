@@ -12,7 +12,7 @@ Dưới đây là sơ đồ luồng hoạt động và kết nối giữa các t
 
 ```mermaid
 graph TD
-    subgraph Môi trường chạy (Docker Network / Localhost)
+    subgraph "Môi trường chạy (Docker Network / Localhost)"
         mlflow[MLflow Server <br> Cổng 5000]
         server[Flower Server <br> Cổng 8080]
         client1[Flower Client 1 <br> ID: 0]
@@ -23,7 +23,7 @@ graph TD
         client2 -->|Kết nối / Nhận trọng số / Gửi cập nhật| server
     end
     
-    subgraph Bộ lưu trữ dữ liệu
+    subgraph "Bộ lưu trữ dữ liệu"
         shared_data[(Thư mục dữ liệu chung <br> ./data)]
         client1 -.->|Đọc phân vùng dữ liệu train 1| shared_data
         client2 -.->|Đọc phân vùng dữ liệu train 2| shared_data
