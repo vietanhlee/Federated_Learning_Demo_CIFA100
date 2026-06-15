@@ -61,7 +61,7 @@ def main():
 
     # Thiết lập thiết bị chạy (CPU hoặc GPU nếu có)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Client {args.client-id} chạy trên thiết bị: {device}")
+    print(f"Client {args.client_id} chạy trên thiết bị: {device}")
 
     # Khởi tạo mô hình CNN
     net = SimpleCNN(num_classes=100)

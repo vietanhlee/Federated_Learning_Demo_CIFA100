@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 
 # Mở cổng kết nối của Flower Server
-EXPOSE 8080
+EXPOSE 8081
 
 # Khởi chạy server mặc định (có thể override qua CMD trong docker-compose)
 ENTRYPOINT ["python", "src/server.py"]

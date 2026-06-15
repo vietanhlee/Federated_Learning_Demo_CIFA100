@@ -20,7 +20,7 @@ flowchart TB
     
     subgraph Net ["Môi trường chạy (Docker Network / Localhost)"]
         mlflow[MLflow Tracking Server <br><b>Cổng: 5000</b>]:::mlflowStyle
-        server[Flower Central Server <br><b>Cổng: 8080</b>]:::serverStyle
+        server[Flower Central Server <br><b>Cổng: 8081</b>]:::serverStyle
         
         subgraph Clients ["Các tiến trình Huấn luyện song song"]
             client1[Flower Client 1 <br><i>(ID: 0 - 25k ảnh)</i>]:::clientStyle
@@ -101,7 +101,7 @@ Cách chạy này tự động thiết lập MLflow, Flower Server và 2 Clients
 
 2. **Cách thức hoạt động:**
    - Container `mlflow-server` khởi chạy và mở cổng `5000`.
-   - Container `flower-server` khởi chạy, lắng nghe cổng `8080`.
+   - Container `flower-server` khởi chạy, lắng nghe cổng `8081`.
    - `client-1` và `client-2` kết nối tới `flower-server` và cùng chia sẻ thư mục lưu trữ `./data` trên máy host để tránh tải lại dữ liệu CIFAR-100 nhiều lần.
    - Cơ chế `restart: on-failure` giúp các client tự kết nối lại nếu server khởi động chậm hơn.
 
