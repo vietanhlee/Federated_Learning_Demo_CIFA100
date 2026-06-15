@@ -1,9 +1,16 @@
 import os
+# Tắt cảnh báo từ GitPython (sử dụng bởi MLflow)
+os.environ["GIT_PYTHON_REFRESH"] = "quiet"
+
+import warnings
+# Bỏ qua các cảnh báo không cần thiết hoặc deprecated từ thư viện Flower
+warnings.filterwarnings("ignore", category=UserWarning, module="flwr")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="flwr")
+
 import argparse
 from collections import OrderedDict
 import torch
 import flwr as fl
-from flwr.common import parameters_to_ndarrays
 import mlflow
 
 from src.model import SimpleCNN, test
@@ -12,13 +19,12 @@ from src.dataset import load_datasets
 def get_evaluate_fn(testloader: torch.utils.data.DataLoader, device: torch.device):
     """Trả về hàm evaluate_fn để Flower Server đánh giá mô hình tập trung (Centralized Evaluation) sau mỗi round."""
     
-    def evaluate(server_round: int, parameters: fl.common.Parameters, config: dict):
+    def evaluate(server_round: int, parameters: fl.common.NDArrays, config: dict):
         # Khởi tạo mô hình cục bộ trên Server để đánh giá
         model = SimpleCNN(num_classes=100)
         
-        # Nạp trọng số từ các clients (dạng Parameters) vào mô hình PyTorch
-        ndarrays = parameters_to_ndarrays(parameters)
-        params_dict = zip(model.state_dict().keys(), ndarrays)
+        # Nạp trọng số từ các clients (dạng NDArrays) vào mô hình PyTorch
+        params_dict = zip(model.state_dict().keys(), parameters)
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         model.load_state_dict(state_dict, strict=True)
         
@@ -38,10 +44,14 @@ def get_evaluate_fn(testloader: torch.utils.data.DataLoader, device: torch.devic
         
     return evaluate
 
+def aggregate_metrics(metrics: list) -> dict:
+    """Hàm tổng hợp các metrics từ các client (trả về dict rỗng)."""
+    return {}
+
 def main():
     parser = argparse.ArgumentParser(description="Flower Federated Learning Server")
     parser.add_argument("--rounds", type=int, default=5, help="Số vòng huấn luyện Federated Learning (mặc định: 5)")
-    parser.add_argument("--server-address", type=str, default="0.0.0.0:8080", help="Địa chỉ chạy server (mặc định: 0.0.0.0:8080)")
+    parser.add_argument("--server-address", type=str, default="0.0.0.0:8081", help="Địa chỉ chạy server (mặc định: 0.0.0.0:8081)")
     parser.add_argument("--mlflow-uri", type=str, default="http://localhost:5000", help="URI của MLflow tracking server")
     args = parser.parse_args()
 
@@ -71,7 +81,9 @@ def main():
         min_fit_clients=2,          # Yêu cầu tối thiểu 2 clients để bắt đầu huấn luyện
         min_evaluate_clients=0,
         min_available_clients=2,    # Đợi tối thiểu 2 clients kết nối mới khởi động
-        evaluate_fn=get_evaluate_fn(testloader, device)
+        evaluate_fn=get_evaluate_fn(testloader, device),
+        fit_metrics_aggregation_fn=aggregate_metrics,
+        evaluate_metrics_aggregation_fn=aggregate_metrics
     )
 
     print(f"Flower Server đang khởi động tại địa chỉ {args.server_address}...")
